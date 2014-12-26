@@ -2,10 +2,10 @@
 # Version:: $Id$
 # Author:: Mike Ho <i(at)bestmike007.com>
 # How to configure log4r for rails in application.rb:
-# config.log4r.<option> = <value>
-# config.log4r.enabled = true # enable log4r integration
-# config.log4r.action_mht = 500 # maximum action handling time to log with level INFO, default: 500ms.
-# config.log4r.auto_reload = true # auto-reload log4r configuration file from config/log4r.yaml (or config/log4r-production.yaml in production environment)
+# config.log4rails.<option> = <value>
+# config.log4rails.enabled = true # enable log4r integration
+# config.log4rails.action_mht = 500 # maximum action handling time to log with level INFO, default: 500ms.
+# config.log4rails.auto_reload = true # auto-reload log4r configuration file from config/log4r.yaml (or config/log4r-production.yaml in production environment)
 
 require 'rails'
 require 'log4r/yamlconfigurator'
@@ -14,27 +14,27 @@ module Log4r
 
   class Railtie < Rails::Railtie
     
-    config.log4r = ActiveSupport::OrderedOptions.new
+    config.log4rails = ActiveSupport::OrderedOptions.new
     # default values
-    config.log4r.enabled = false
-    config.log4r.action_mht = 500
-    config.log4r.auto_reload = true
+    config.log4rails.enabled = false
+    config.log4rails.action_mht = 500
+    config.log4rails.auto_reload = true
 
-    initializer "log4r.pre_init", :before => :initialize_logger do |app|
-      if app.config.log4r.enabled
+    initializer "log4rails.pre_init", :before => :initialize_logger do |app|
+      if app.config.log4rails.enabled
         Log4r::Railtie.load_config
-        Log4r::Railtie.pre_init(app, {:root => Rails.root.to_s, :env => Rails.env}.merge(app.config.log4r))
+        Log4r::Railtie.pre_init(app, {:root => Rails.root.to_s, :env => Rails.env}.merge(app.config.log4rails))
       end
     end
 
-    initializer "log4r.post_init", :after => :initialize_logger do |app|
-      if app.config.log4r.enabled
+    initializer "log4rails.post_init", :after => :initialize_logger do |app|
+      if app.config.log4rails.enabled
         Log4r::Railtie.post_init
       end
     end
 
-    initializer "log4r.cache_logger", :after => :initialize_cache do |app|
-      if app.config.log4r.enabled
+    initializer "log4rails.cache_logger", :after => :initialize_cache do |app|
+      if app.config.log4rails.enabled
         class << Rails.cache
           def logger
             Log4r::Logger['rails::cache'] || Log4r::Logger.root
@@ -135,24 +135,6 @@ module Log4r
       
       def post_init
         setup_logger Rails, "rails"
-        # fix rails server stdout formatter issue
-        if Rails.env == 'development' && Rails.logger.instance_of?(Log4r::Logger)
-          if Rails.logger.respond_to? :formatter # latest Log4r ~> 1.1.11
-            if Rails.logger.outputters.find{|o|o.class == Log4r::StderrOutputter}.nil?
-              outputter = Log4r::StderrOutputter.new "rack_patch"
-              outputter.level = Log4r::LNAMES.count - 1 # turn it :OFF
-              outputter.extend Module.new {
-                def formatter
-                  Rails.logger.remove self # remove the outputter as soon as the rack server has started
-                  nil
-                end
-              }
-              Rails.logger.add outputter
-            end
-          else
-            Rails.logger.extend Module.new { def formatter; nil; end }
-          end
-        end
         # disable rack development output, e.g. Started GET "/session/new" for 127.0.0.1 at 2012-09-26 14:51:42 -0700
         if Rails.const_defined?(:Rack) && Rails::Rack.const_defined?(:Logger)
           setup_logger Rails::Rack::Logger, "root"
@@ -209,7 +191,7 @@ module Log4r
               custom_logger || Log4r::Logger['#{logger_name}'] || Log4r::Logger.root
             end
             define_method :logger= do |l|
-              (l || custom_logger).debug "Log4r is preventing set of logger. Use #custom_logger= if you really want it set."
+              (l || custom_logger).debug "Log4rails is preventing set of logger. Use #custom_logger= if you really want it set."
             end
             define_method :custom_logger= do |l|
               custom_logger = l

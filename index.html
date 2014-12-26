@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Log4rails by bestmike007</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/bestmike007/log4rails">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/bestmike007/log4rails/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/bestmike007/log4rails/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Log4rails</h1>
+          <p>Better log4r for rails</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/bestmike007">bestmike007</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
+
+        <p><a href="http://badge.fury.io/rb/log4rails"><img src="https://badge.fury.io/rb/log4rails.svg" alt="Gem Version"></a></p>
+
+<p>Log4r - A flexible logging library for Ruby</p>
+
+<p>Log4rails - A better log4r especially for rails</p>
+
+<pre><code>gem install log4rails
+</code></pre>
+
+<p>DO NOT USE THIS TOGETHER WITH <code>log4r</code>!</p>
+
+<div class="highlight highlight-ruby"><pre>config.log4rails.<span class="pl-k">&lt;</span>option<span class="pl-k">&gt;</span> <span class="pl-k">=</span> <span class="pl-k">&lt;</span>value<span class="pl-k">&gt;</span>
+<span class="pl-c"># enable log4rails integration</span>
+config.log4rails.enabled <span class="pl-k">=</span> <span class="pl-c1">true</span>
+<span class="pl-c"># maximum action handling time to log with level INFO, default: 500ms.</span>
+config.log4rails.action_mht <span class="pl-k">=</span> <span class="pl-c1">500</span>
+<span class="pl-c"># auto-reload log4r configuration file from config/log4r.yaml (or config/log4r-production.yaml in production environment)</span>
+config.log4rails.auto_reload <span class="pl-k">=</span> <span class="pl-c1">true</span></pre></div>
+
+<h2>
+<a id="why-this-fork" class="anchor" href="#why-this-fork" aria-hidden="true"><span class="octicon octicon-link"></span></a>Why this fork</h2>
+
+<p>Log4r seems not to be actively maintained. And also I need these features:</p>
+
+<ul>
+<li>Integrate with the latest rails</li>
+<li>Reload the configuration file in production mode in order to switch ON/OFF logs</li>
+<li>Better RollingFileOutputter, etc.</li>
+</ul>
+
+<h2>
+<a id="todo" class="anchor" href="#todo" aria-hidden="true"><span class="octicon octicon-link"></span></a>TODO</h2>
+
+<ul>
+<li>Better integrate with rails</li>
+<li>Write more tests</li>
+<li>Document is important, especially since rubyforge is dead</li>
+<li>Refactor</li>
+<li>Fix issues for general usage</li>
+<li>Improve extensibility</li>
+</ul>
+
+<p>You're welcome to contribute!</p>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-29233497-3");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>

@@ -11,9 +11,9 @@ module Log4rails
     # load or reload config from RAILS_ROOT/config/log4r.yaml or RAILS_ROOT/config/log4r-production.yaml
     def check_config
       # auto reload config every 30 seconds.
-      return if !check_again?
+      return unless check_again?
       detect_existing_config_path
-      return if @config_path == default_config_path || File.mtime(@config_path) == @config_time
+      return if File.mtime(@config_path) == @config_time
       Log4r::YamlConfigurator.load_yaml_file @config_path
       @config_time = File.mtime(@config_path)
     rescue Log4r::ConfigError => e

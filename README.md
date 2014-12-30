@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/bestmike007/log4rails.svg?branch=master)](https://travis-ci.org/bestmike007/log4rails)
 [![Gem Version](https://badge.fury.io/rb/log4rails.svg)](http://badge.fury.io/rb/log4rails)
 [![Code Climate](https://codeclimate.com/github/bestmike007/log4rails/badges/gpa.svg)](https://codeclimate.com/github/bestmike007/log4rails)
 [![Test Coverage](https://codeclimate.com/github/bestmike007/log4rails/badges/coverage.svg)](https://codeclimate.com/github/bestmike007/log4rails)

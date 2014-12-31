@@ -12,5 +12,5 @@ before_script:
   - "rake db:setup RAILS_ENV=test"
 script:
   - rspec
-  - "export RAILS_VERSION=4.1.8; bundle update && rspec"
+  - "export RAILS_VERSION=4.1.8; spring stop; bundle update && rspec"
   - "cd ..; rspec"

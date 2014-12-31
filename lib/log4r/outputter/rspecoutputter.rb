@@ -28,6 +28,31 @@ module Log4r
     ensure
       @expecting = nil
       @count = 0
+      @got = []
+    end
+    
+    def expect_logs(*arr)
+      @expecting = arr
+      yield
+      if @expecting.size > 0
+        expect(nil).to eq(@expecting[0])
+      end
+    ensure
+      @expecting = nil
+      @count = 0
+      @got = []
+    end
+    
+    def dump_logs
+      @expecting = :all
+      @count = 0
+      @got = []
+      yield
+      @got
+    ensure
+      @expecting = nil
+      @count = 0
+      @got = []
     end
 
     #######
@@ -38,12 +63,15 @@ module Log4r
     def write(data)
       return if !@expecting
       data = data[0..-2]
-      if @expecting.instance_of? String
-        expect(data).to eq(@expecting)
-      else
-        expect(data).to be =~ @expecting
+      m = @expecting.instance_of?(Array) ? @expecting.shift : @expecting
+      if m.instance_of? String
+        expect(data).to eq(m)
+      elsif m.instance_of? Regexp
+        expect(data).to be =~ m
+      elsif m != :all
+        puts data
       end
-      @got << data
+      @got << data unless @expecting.instance_of? Array
     end
   end
 end

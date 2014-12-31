@@ -1,3 +1,6 @@
+require "codeclimate-test-reporter"
+CodeClimate::TestReporter.start
+
 module Kernel
   alias_method :normal_require, :require
   Log4rDynamicLoaded = []

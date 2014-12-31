@@ -23,12 +23,12 @@ RSpec.describe "Log4r" do
       o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that\]that % How's this\s+$/) {
         l.info "How's this"
       }
-      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  ERROR \[test::this::that\]that % and a really freaking huge lin\s+$/) {
+      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  ERROR \[test::this::that\]that % and a really freaking huge lin\s*$/) {
         l.error "and a really freaking huge line which we hope will be trimmed?"
       }
       e = ArgumentError.new("something barfed")
       e.set_backtrace Array.new(5, "trace junk at thisfile.rb 154")
-      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  FATAL \[test::this::that\]that % Caught ArgumentError: somethin\s+$/) {
+      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  FATAL \[test::this::that\]that % Caught ArgumentError: somethin\s*$/) {
         l.fatal e
       }
       o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that\]that % Array: \[1, 3, 5\]\s+$/) {

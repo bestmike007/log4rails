@@ -1,0 +1,60 @@
+# default log4r configuration for rails.
+log4r_config:
+  loggers:
+    - name          : 'rails'
+      level         : DEBUG
+      additive      : false
+      trace         : false
+      outputters    : 
+      - rspec
+
+    - name          : 'rails::db'
+      level         : DEBUG
+      additive      : false
+      trace         : false
+      outputters    : 
+      - rspec
+      
+    - name          : 'rails::controllers'
+      level         : DEBUG
+      additive      : false
+      trace         : false
+      outputters    : 
+      - rspec
+      
+    - name          : 'rails::params'
+      level         : INFO
+      additive      : false
+      trace         : false
+      outputters    : 
+      - rspec
+
+    - name          : 'rails::models'
+      level         : DEBUG
+      additive      : false
+      trace         : false
+      outputters    : 
+      - rspec
+
+    - name          : 'rails::cache'
+      level         : DEBUG
+      additive      : false
+      trace         : false
+      outputters    : 
+      - rspec
+
+    - name          : 'rails::mailers'
+      level         : DEBUG
+      additive      : false
+      trace         : false
+      outputters    : 
+      - rspec
+
+  # define all outputters (incl. formatters)
+  outputters:
+  - type: RspecOutputter
+    name: rspec
+    formatter:
+      date_pattern: '%H:%M:%S'
+      pattern     : '%d [%C] %l: %m'
+      type        : PatternFormatter

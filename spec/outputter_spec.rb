@@ -123,7 +123,7 @@ RSpec.describe "Log4r" do
   end
   
   it "tests file encoding" do
-    if defined?( Encoding )
+    if defined?( Encoding ) && ENV['RUBY_VERSION'] >= 'ruby-2.0.0'
       Encoding.default_internal = Encoding::UTF_8
       File.open( '/tmp/log4rails-test.log', 'w' ) { |f| f.write("\xC3\xBCmlat") }
       fenc = Log4r::FileOutputter.new('fenc', :filename => '/tmp/log4rails-test.log')

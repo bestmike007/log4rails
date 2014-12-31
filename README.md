@@ -11,6 +11,8 @@ Log4rails - A better log4r especially for rails
 gem install log4rails
 ```
 
+Document is also available at [Rubydoc](http://www.rubydoc.info/github/bestmike007/log4rails)
+
 DO NOT USE THIS TOGETHER WITH `log4r`!
 
 ``` ruby

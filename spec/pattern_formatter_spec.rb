@@ -17,21 +17,21 @@ RSpec.describe "Log4r" do
                                #:date_pattern=> "%Y"
                                #:date_method => :usec
       o.formatter = f
-      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in `block.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  DEBUG \[test::this::that\]that % And this\s{32}$/) {
+      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  DEBUG \[test::this::that\]that % And this\s{32}$/) {
         l.debug "And this"
       }
-      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in `block.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that\]that % How's this\s{30}$/) {
+      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that\]that % How's this\s{30}$/) {
         l.info "How's this"
       }
-      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in `block.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  ERROR \[test::this::that\]that % and a really freaking huge lin\s{10}$/) {
+      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  ERROR \[test::this::that\]that % and a really freaking huge lin\s{10}$/) {
         l.error "and a really freaking huge line which we hope will be trimmed?"
       }
       e = ArgumentError.new("something barfed")
       e.set_backtrace Array.new(5, "trace junk at thisfile.rb 154")
-      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in `block.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  FATAL \[test::this::that\]that % Caught ArgumentError: somethin\s{10}$/) {
+      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  FATAL \[test::this::that\]that % Caught ArgumentError: somethin\s{10}$/) {
         l.fatal e
       }
-      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in `block.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that\]that % Array: \[1, 3, 5\]\s{24}$/) {
+      o.expect_log(/^.+pattern_formatter_spec.+ T-'pattern_formatter_spec\.rb:\d+:in.+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that\]that % Array: \[1, 3, 5\]\s{24}$/) {
         l.info [1, 3, 5]
       }
     }.not_to raise_error

@@ -45,7 +45,9 @@ RSpec.describe "Log4r" do
       Log4r::Configurator['logpath'] = '/tmp/'
       Log4r::Configurator.load_xml_file(File.join(File.dirname(__FILE__), 'testconf.xml'))
       a = Log4r::Logger['first::second']
-      a.bing "what the heck"
+      Log4r::Outputter['SO'].expect_log(/^\d+ second Bing> what the heck$/) {
+        a.bing "what the heck"
+      }
     }.not_to raise_error
   end
   

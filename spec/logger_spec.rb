@@ -109,18 +109,27 @@ RSpec.describe "Log4r" do
   
   it "tests levels" do
     l = Log4r::Logger.new("levels", Log4r::WARN)
-    l.add(Log4r::Outputter.stdout)
+    o = Log4r::RspecOutputter.new "ro"
+    l.add o
     expect(l.level).to eq Log4r::WARN
     expect(l.fatal?).to eq true
     expect(l.error?).to eq true
     expect(l.warn?).to eq true
     expect(l.info?).to eq false
     expect(l.debug?).to eq false
-    l.debug "debug message should NOT show up"
-    l.info "info message should NOT show up"
-    l.warn "warn messge should show up. 3 total"
-    l.error "error messge should show up. 3 total"
-    l.fatal "fatal messge should show up. 3 total"
+    o.expect_log(//, times: 0) {
+      l.debug "debug message should NOT show up"
+      l.info "info message should NOT show up"
+    }
+    o.expect_log(' WARN levels: warn messge should show up') {
+      l.warn "warn messge should show up"
+    }
+    o.expect_log('ERROR levels: error messge should show up') {
+      l.error "error messge should show up"
+    }
+    o.expect_log('FATAL levels: fatal messge should show up') {
+      l.fatal "fatal messge should show up"
+    }
     l.level = Log4r::ERROR
     expect(l.level).to eq Log4r::ERROR
     expect(l.fatal?).to eq true
@@ -128,45 +137,73 @@ RSpec.describe "Log4r" do
     expect(l.warn?).to eq false
     expect(l.info?).to eq false
     expect(l.debug?).to eq false
-    l.debug "debug message should NOT show up"
-    l.info "info message should NOT show up"
-    l.warn "warn messge should NOT show up."
-    l.error "error messge should show up. 2 total"
-    l.fatal "fatal messge should show up. 2 total"
+    o.expect_log(//, times: 0) {
+      l.debug "debug message should NOT show up"
+      l.info "info message should NOT show up"
+      l.warn "warn messge should NOT show up."
+    }
+    o.expect_log('ERROR levels: error messge should show up') {
+      l.error "error messge should show up"
+    }
+    o.expect_log('FATAL levels: fatal messge should show up') {
+      l.fatal "fatal messge should show up"
+    }
     l.level = Log4r::WARN
   end
   
   it "logs with blocks" do
     l = Log4r::Logger.new 'logblocks'
     l.level = Log4r::WARN
-    l.add(Log4r::Outputter.stdout)
+    o = Log4r::RspecOutputter.new "ro"
+    l.add o
     expect {
-      l.debug { puts "should NOT show up"; "LOGBLOCKS" }
-      l.fatal { puts "should show up"; "LOGBLOCKS" }
-      l.fatal { nil }
-      l.fatal {}
+      o.expect_log(//, times: 0) {
+        executed = false
+        l.debug { executed = true; "LOGBLOCKS" }
+        expect(executed).to be false
+      }
+      o.expect_log("FATAL logblocks: LOGBLOCKS") {
+        executed = false
+        l.fatal { executed = true; "LOGBLOCKS" }
+        expect(executed).to be true
+      }
+      o.expect_log("FATAL logblocks: NilClass: nil", times: 2) {
+        l.fatal { nil }
+        l.fatal {}
+      }
     }.not_to raise_error
   end
   
   it "hierarchically logs" do
     expect {
+      o = Log4r::RspecOutputter.new "ro"
       a = Log4r::Logger.new("one")
-      a.add(Log4r::StdoutOutputter.new 'so1')
+      a.add o
       b = Log4r::Logger.new("one::two")
-      b.add(Log4r::StdoutOutputter.new 'so2')
+      b.add o
       c = Log4r::Logger.new("one::two::three")
-      c.add(Log4r::StdoutOutputter.new 'so3')
+      c.add o
       d = Log4r::Logger.new("one::two::three::four")
-      d.add(Log4r::StdoutOutputter.new 'so4')
+      d.add o
       d.additive = false
       e = Log4r::Logger.new("one::two::three::four::five")
-      e.add(Log4r::StdoutOutputter.new 'so5')
-  
-      a.fatal "statement from a should show up once"
-      b.fatal "statement from b should show up twice"
-      c.fatal "statement from c should show up thrice"
-      d.fatal "statement from d should show up once"
-      e.fatal "statement from e should show up twice"
+      e.add o
+      
+      o.expect_log("FATAL one: statement from a should show up once") {
+        a.fatal "statement from a should show up once"
+      }
+      o.expect_log("FATAL two: statement from b should show up twice", times: 2) {
+        b.fatal "statement from b should show up twice"
+      }
+      o.expect_log("FATAL three: statement from c should show up thrice", times: 3) {
+        c.fatal "statement from c should show up thrice"
+      }
+      o.expect_log("FATAL four: statement from d should show up once") {
+        d.fatal "statement from d should show up once"
+      }
+      o.expect_log("FATAL five: statement from e should show up twice", times: 2) {
+        e.fatal "statement from e should show up twice"
+      }
     }.not_to raise_error
   end
   
@@ -214,13 +251,19 @@ RSpec.describe "Log4r" do
         end
       end
       l = Log4r::Logger.new('custom_formatter')
-      o = Log4r::StdoutOutputter.new('formatter'=>MyFormatter1.new)
+      o = Log4r::RspecOutputter.new('formatter' => MyFormatter1.new)
       l.add o
-      l.error "try myformatter1"
-      l.fatal "try myformatter1"
+      o.expect_log("ERROR custom_formatter: try myformatter1") {
+        l.error "try myformatter1"
+      }
+      o.expect_log("FATAL custom_formatter: try myformatter1") {
+        l.fatal "try myformatter1"
+      }
       o.formatter = MyFormatter2.new
-      l.error "try formatter2"
-      l.fatal "try formatter2"
+      o.expect_log("MyFormatter2", times: 2) {
+        l.error "try formatter2"
+        l.fatal "try formatter2"
+      }
     }.not_to raise_error
   end
   

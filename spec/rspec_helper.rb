@@ -38,6 +38,7 @@ module Kernel
     require 'log4r/formatter/log4jxmlformatter'
     require 'log4r/outputter/udpoutputter'
     require 'log4r/outputter/consoleoutputters'
+    require 'log4r/outputter/rspecoutputter'
     require 'log4r/yamlconfigurator'
     
   end

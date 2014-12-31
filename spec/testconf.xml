@@ -11,16 +11,11 @@
   </pre_config>
 
   <!-- level and formatter are optional, -->
-  <outputter name="SO" type="StdoutOutputter">
+  <outputter name="SO" type="RspecOutputter">
     <level>Foo</level>
     <formatter type="Log4r::PatternFormatter">
       <pattern>%d %c %l&gt; %m</pattern>
       <date_method>#{datem}</date_method>
-    </formatter>
-  </outputter>
-  <outputter name="SE" type="StderrOutputter" level="Baz">
-    <formatter type="PatternFormatter" pattern="#{mypattern}">
-      <date_pattern>%H:%S</date_pattern>
     </formatter>
   </outputter>
   <outputter name="F" type="FileOutputter">
@@ -31,7 +26,7 @@
   <!-- optional level, additive and outputters -->
   <logger name="first::second" level="Bar" additive="false">
     <trace>true</trace>
-    <outputters>SO, SE, F, stdout, stderr</outputters>
+    <outputters>SO, F</outputters>
   </logger>
 </log4r_config>
 </test>

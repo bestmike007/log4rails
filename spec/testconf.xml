@@ -24,7 +24,7 @@
     </formatter>
   </outputter>
   <outputter name="F" type="FileOutputter">
-    <filename>#{logpath}/junk/foo.log</filename>
+    <filename>#{logpath}/log4rails-test.log</filename>
     <trunc>true</trunc>
     <only_at>Foo, Bar, Bing</only_at>
   </outputter>

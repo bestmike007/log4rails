@@ -1,8 +1,11 @@
-require_relative "rspec_helper"
-
-Log4r::Logger.root
+require "rspec_helper"
 
 RSpec.describe "Log4r" do
+  
+  before(:each) {
+    reload_log4r
+    Log4r::Logger.root
+  }
   
   it "loads LNAMES properly" do
     levels = [:ALL, :DEBUG, :INFO, :WARN, :ERROR, :FATAL, :OFF, :LEVELS].map{|l| Log4r.const_get l }

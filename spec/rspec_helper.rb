@@ -1,5 +1,7 @@
-require "codeclimate-test-reporter"
-CodeClimate::TestReporter.start
+if ENV['RUBY_VERSION'] == 'ruby-2.2.0'
+  require "codeclimate-test-reporter"
+  CodeClimate::TestReporter.start
+end
 
 module Kernel
   alias_method :normal_require, :require

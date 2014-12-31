@@ -1,16 +1,17 @@
 language: ruby
+sudo: false
 rvm:
   - 1.9.3
   - 2.0.0
   - 2.1.5
   - 2.2.0
   - jruby-19mode
-  - rbx
+  - rbx-2.2.7
 before_script:
   - "cd rails_test"
   - "bundle install"
   - "rake db:setup RAILS_ENV=test"
 script:
   - rspec
-  - "export RAILS_VERSION=4.1.8; spring stop; bundle update && rspec"
+  - "export RAILS_VERSION=4.1.8; bundle update && rspec"
   - "cd ..; rspec"

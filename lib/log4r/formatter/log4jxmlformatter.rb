@@ -18,15 +18,22 @@ module Log4r
   class Log4jXmlFormatter < BasicFormatter
     
     def format(logevent)
-      logger = logevent.fullname.gsub('::', '.')
       timestamp = (Time.now.to_f * 1000).to_i
       level = LNAMES[logevent.level]
       message = format_object(logevent.data)
       exception = message if logevent.data.kind_of? Exception
       file, line, method = parse_caller(logevent.tracer[0]) if logevent.tracer
       
+      build(logevent.fullname.gsub('::', '.'), timestamp, level, message, exception, file, line, method)
+    end
+
+    #######
+    private
+    #######
+    
+    def build(logger_name, timestamp, level, message, exception, file, line, method)
       builder = Builder::XmlMarkup.new
-      xml = builder.log4j :event, :logger => logger,
+      xml = builder.log4j :event, :logger => logger_name,
                                   :timestamp => timestamp,
                                   :level => level,
                                   :thread => '' do |e|
@@ -45,10 +52,6 @@ module Log4r
             end
       xml
     end
-
-    #######
-    private
-    #######
 
     def parse_caller(line)
       if /^(.+?):(\d+)(?::in `(.*)')?/ =~ line

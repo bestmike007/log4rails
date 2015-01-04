@@ -1,5 +1,7 @@
 log4r_config:
-
+  pre_config:
+    parameters:
+      CUSTOM_DOMAIN: 'bar.com'
   # define all loggers ...
   loggers:
     - name      : mylogger

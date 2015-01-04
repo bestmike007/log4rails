@@ -6,6 +6,7 @@
     <global level="Foo"/>
     <parameters>
       <mypattern>[%l] %d %t - %m</mypattern>
+      <logpath>/tmp/</logpath>
     </parameters>
     <parameter name="datem" value="usec"/>
   </pre_config>

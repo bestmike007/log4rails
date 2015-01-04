@@ -37,6 +37,7 @@ module Kernel
     require 'log4r/outputter/udpoutputter'
     require 'log4r/outputter/consoleoutputters'
     require 'log4r/outputter/rspecoutputter'
-    require 'log4r/yamlconfigurator'
+    require 'log4r/xml_configurator'
+    require 'log4r/yaml_configurator'
   end
 end

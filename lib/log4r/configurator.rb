@@ -5,220 +5,194 @@
 # Version:: $Id$
 
 require "log4r/logger"
-require "log4r/outputter/staticoutputter"
-require "log4r/lib/xmlloader"
 require "log4r/logserver"
-require "log4r/outputter/remoteoutputter"
+require "log4r/outputter/staticoutputter"
 
 # TODO: catch unparsed parameters #{FOO} and die
 module Log4r
-  # Gets raised when Configurator encounters bad XML.
+  
+  # Gets raised when Configurator encounters invalid configuration.
   class ConfigError < Exception
   end
 
-  # See log4r/configurator.rb
+  # The basic configurator loads config from a hash object. Descendants translate configuration written in specific format into hash config add call Configurator#config(hash_config)
+  
   class Configurator
-    include REXML if HAVE_REXML
-    @@params = Hash.new
-
-    # Get a parameter's value
-    def self.[](param); @@params[param] end
-    # Define a parameter with a value
-    def self.[]=(param, value); @@params[param] = value end
-
-    # Sets the custom levels. This method accepts symbols or strings.
-    #
-    #   Configurator.custom_levels('My', 'Custom', :Levels)
-    #
-    # Alternatively, you can specify custom levels in XML:
-    # 
-    #   <log4r_config>
-    #     <pre_config>
-    #       <custom_levels>
-    #         My, Custom, Levels
-    #       </custom_levels>
-    #       ...
-
-    def self.custom_levels(*levels)
-      return Logger.root if levels.size == 0
-      for i in 0...levels.size
-        name = levels[i].to_s
-        if name =~ /\s/ or name !~ /^[A-Z]/
-          raise TypeError, "#{name} is not a valid Ruby Constant name", caller
-        end
+    
+    class << self
+      
+      def config(hash_config)
+        self.new.load_config(hash_config)
       end
-      Log4r.define_levels *levels
+    
+      alias_method :load_config, :config
+      
+      def self.config_parser(parser, format_name)
+        self.const_set :Parser, parser
+        self.class_eval %{
+          def load_#{format_name}(str_or_file)
+            load_config Parser.new(str_or_file).parse
+          end
+          # Given a filename, loads the XML configuration for Log4r.
+          def load_#{format_name}_file(filename)
+            load_#{format_name}(File.new(filename))
+          end
+          alias_method :load_#{format_name}_string, :load_#{format_name}
+        }
+      end
+      
     end
-
-    # Given a filename, loads the XML configuration for Log4r.
-    def self.load_xml_file(filename)
-      detect_rexml
-      actual_load Document.new(File.new(filename))
-    end
-
-    # You can load a String XML configuration instead of a file.
-    def self.load_xml_string(string)
-      detect_rexml
-      actual_load Document.new(string)
+    
+    def load_config(hash_config)
+      internal_load(hash_config)
     end
 
     #######
     private
     #######
-
-    def self.detect_rexml
-      unless HAVE_REXML
-        raise LoadError,
-        "Need REXML to load XML configuration", caller[1..-1]
-      end
-    end
-
-    def self.actual_load(doc)
-      confignode = doc.elements['//log4r_config']
-      if confignode.nil?
-        raise ConfigError, 
-        "<log4r_config> element not defined", caller[1..-1]
-      end
-      decode_xml(confignode)
+    
+    # Initialize custom levels or load default levels
+    def custom_levels(levels)
+      return Logger.root if levels.nil? || levels.size == 0
+      Log4r.define_levels(*levels)
     end
     
-    def self.decode_xml(doc)
-      decode_pre_config(doc.elements['pre_config'])
-      doc.elements.each('outputter') {|e| decode_outputter(e)}
-      doc.elements.each('logger') {|e| decode_logger(e)}
-      doc.elements.each('logserver') {|e| decode_logserver(e)}
-    end
-
-    def self.decode_pre_config(e)
-      return Logger.root if e.nil?
-      decode_custom_levels(e.elements['custom_levels'])
-      global_config(e.elements['global'])
-      global_config(e.elements['root'])
-      decode_parameters(e.elements['parameters'])
-      e.elements.each('parameter') {|p| decode_parameter(p)}
-    end
-
-    def self.decode_custom_levels(e)
-      return Logger.root if e.nil? or e.text.nil?
-      begin custom_levels *Log4rTools.comma_split(e.text)
-      rescue TypeError => te
-        raise ConfigError, te.message, caller[1..-4]
-      end
-    end
-    
-    def self.global_config(e)
-      return if e.nil?
-      globlev = e.value_of 'level'
-      return if globlev.nil?
-      lev = LNAMES.index(globlev)     # find value in LNAMES
-      Log4rTools.validate_level(lev, 4)  # choke on bad level
-      Logger.global.level = lev
-    end
-
-    def self.decode_parameters(e)
-      e.elements.each{|p| @@params[p.name] = p.text} unless e.nil?
-    end
-
-    def self.decode_parameter(e)
-      @@params[e.value_of('name')] = e.value_of 'value'
-    end
-
-    def self.decode_outputter(e)
-      # fields
-      name = e.value_of 'name'
-      type = e.value_of 'type'
-      level = e.value_of 'level'
-      only_at = e.value_of 'only_at'
-      # validation
-      raise ConfigError, "Outputter missing name", caller[1..-3] if name.nil?
-      raise ConfigError, "Outputter missing type", caller[1..-3] if type.nil?
-      Log4rTools.validate_level(LNAMES.index(level)) unless level.nil?
-      only_levels = []
-      unless only_at.nil?
-        for lev in Log4rTools.comma_split(only_at)
-          alev = LNAMES.index(lev)
-          Log4rTools.validate_level(alev, 3)
-          only_levels.push alev
+    # Load all configuration from a hash and initialize everything
+    def internal_load(hash_config)
+      pre_config(hash_config[:pre_config])
+      
+      [:outputter, :logger, :logserver].each do |item|
+        (hash_config["#{item}s".to_sym] || []).each do |c|
+          send "config_#{item}".to_sym, c
         end
       end
-      formatter = decode_formatter(e.elements['formatter'])
-      # build the eval string
-      buff = "Outputter[name] = #{type}.new name"
-      buff += ",:level=>#{LNAMES.index(level)}" unless level.nil?
-      buff += ",:formatter=>formatter" unless formatter.nil?
-      params = decode_hash_params(e)
-      buff += "," + params.join(',') if params.size > 0
-      begin eval buff
-      rescue Exception => ae
-        raise ConfigError, 
-        "Problem creating outputter: #{ae.message}", caller[1..-3]
-      end
-      Outputter[name].only_at *only_levels if only_levels.size > 0
-      Outputter[name]
     end
 
-    def self.decode_formatter(e)
-      return nil if e.nil?
-      type = e.value_of 'type' 
-      raise ConfigError, "Formatter missing type", caller[1..-4] if type.nil?
-      buff = "#{type}.new " + decode_hash_params(e).join(',')
-      begin return eval(buff)
-      rescue Exception => ae
-        raise ConfigError,
-        "Problem creating outputter: #{ae.message}", caller[1..-4]
-      end
-    end
-
-    ExcludeParams = %w{formatter level name type}
-
-    # Does the fancy parameter to hash argument transformation
-    def self.decode_hash_params(e)
-      buff = []
-      e.attributes.each_attribute {|p| 
-        next if ExcludeParams.include? p.name
-        buff << ":" + p.name + "=>" + paramsub(p.value)
-      }
-      e.elements.each {|p| 
-        next if ExcludeParams.include? p.name
-        buff << ":" + p.name + "=>" + paramsub(p.text)
-      }
-      buff
+    def pre_config(c)
+      return Logger.root if c.nil?
+      custom_levels(c[:custom_levels])
+      global_level_config(c[:global_level])
+      @params = c[:parameters] || {}
     end
     
-    # Substitues any #{foo} in the XML with Parameter['foo']
-    def self.paramsub(str)
-      return nil if str.nil?
-      @@params.each {|param, value| str.sub! '#{'+param+'}', value}
-      "'" + str + "'"
+    def global_level_config(level)
+      return if level.nil?
+      level = LNAMES.index(level)     # find value in LNAMES
+      Log4rTools.validate_level(level)  # choke on bad level
+      Logger.global.level = level
+    end
+    
+    def config_outputter(c)
+      OutputterConfigurator.new(@params, c).do_config
     end
 
-    def self.decode_logger(e)
-      l = Logger.new e.value_of('name')
-      decode_logger_common(l, e)
+    def config_logger(c)
+      l = Logger.new c[:name]
+      config_logger_common(l, c)
     end
 
-    def self.decode_logserver(e)
-      return unless HAVE_REXML
-      name = e.value_of 'name'
-      uri = e.value_of 'uri'
-      l = LogServer.new name, uri
-      decode_logger_common(l, e)
+    def config_logserver(c)
+      l = LogServer.new c[:name], c[:uri]
+      config_logger_common(l, c)
     end
 
-    def self.decode_logger_common(l, e)
-      level = e.value_of 'level'
-      additive = e.value_of 'additive'
-      trace = e.value_of 'trace'
+    def config_logger_common(l, c)
+      level = c[:level]
       l.level = LNAMES.index(level) unless level.nil?
-      l.additive = additive unless additive.nil?
-      l.trace = trace unless trace.nil?
+      l.additive = Log4rTools.decode_bool(c, :additive, l.additive)
+      l.trace = Log4rTools.decode_bool(c, :trace, l.trace)
       # and now for outputters
-      outs = e.value_of 'outputters'
-      Log4rTools.comma_split(outs).each {|n| l.add n.strip} unless outs.nil?
-      e.elements.each('outputter') {|e|
-        name = (e.value_of 'name' or e.text)
-        l.add Outputter[name]
-      }
+      (c[:outputters] || []).each { |o| l.add o }
+    end
+  end
+  
+  class Configurator
+    
+    # config and register outputters from the hash configuration section
+    
+    class OutputterConfigurator
+      
+      def initialize(params, config)
+        @params = params || {}
+        @config = config
+        raise "Expect global parameters to be a hash" if !@params.instance_of?(Hash)
+      end
+      
+      def do_config
+        return unless @config.instance_of?(Hash)
+        internal_config_outputter
+      rescue ConfigError
+        raise
+      rescue Exception => ae
+        raise ConfigError, "Problem creating outputter: #{ae.message}", ae.backtrace
+      end
+      
+      #######
+      private
+      #######
+      
+      def outputter_name
+        raise ConfigError, "Outputter name is required." if @config[:name].nil?
+        @config[:name]
+      end
+      
+      def outputter_type
+        raise ConfigError, "Outputter type is required." if @config[:type].nil?
+        @config[:type]
+      end
+      
+      def formatter_config
+        @config[:formatter].instance_of?(Hash) ? @config[:formatter] : nil
+      end
+  
+      def internal_config_outputter
+        config_outputter_level
+        config_formatter
+        
+        Log4rTools.load_outputter(outputter_type).new(outputter_name, fence_params)
+      
+        config_outputter_only_at
+      end
+      
+      def config_outputter_level
+        if @config.has_key? :level
+          level = @config[:level]
+          Log4rTools.validate_level(LNAMES.index(level))
+          @config[:level] = LNAMES.index(level)
+        end
+      end
+      
+      def config_outputter_only_at
+        if @config.has_key? :only_at
+          only_at = @config[:only_at]
+          only_levels = (only_at.instance_of?(Array) ? only_at : [only_at]).map{ |l| LNAMES.index(l) }
+          Outputter[outputter_name].only_at(*only_levels) if only_levels.size > 0
+        end
+      end
+  
+      def config_formatter
+        return if formatter_config.nil?
+        @config[:formatter] = Log4rTools.load_formatter(formatter_config[:type]).new fence_params(formatter_config)
+      rescue Exception => ae
+        raise ConfigError, "Problem creating outputter: #{ae.message}", ae.backtrace
+      end
+  
+      # Does the fancy parameter to hash argument transformation
+      def fence_params(c=@config)
+        config = c.clone
+        [:name, :type, :only_at].each { |k| config.delete k }
+        config.each { |k, v| param_sub(v) }
+        config
+      end
+      
+      # Substitues any #{foo} in the configuration with params[:foo]
+      def param_sub(param)
+        if param.instance_of? String
+          @params.each { |k, v| param.sub!('#{%s}' % k, v) }
+        elsif param.instance_of?(Array)
+          param.each { |v| param_sub(v) }
+        end
+      end
     end
   end
 end

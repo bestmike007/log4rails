@@ -17,12 +17,13 @@ RSpec.describe "Log4r" do
       attr_reader :array_param
     
       def initialize(name, hash = {})
-        @array_param = hash['array_param']
+        @array_param = hash[:array_param]
+        super
       end
+      
     end
     
     expect {
-      Log4r::YamlConfigurator['CUSTOM_DOMAIN'] = 'bar.com'
       Log4r::YamlConfigurator.load_yaml_file(File.join(File.dirname(__FILE__), 'testyaml_arrays.yaml'))
     }.not_to raise_error
     log = Log4r::Logger['mylogger']

@@ -1,4 +1,4 @@
-require 'log4r/yamlconfigurator'
+require 'log4r/yaml_configurator'
 
 module Log4rails
   

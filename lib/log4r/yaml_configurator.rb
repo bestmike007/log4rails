@@ -89,9 +89,7 @@ module Log4r
       
     end
     
-    class << self
-      config_parser(YamlConfigParser, :yaml)
-    end
+    config_parser(YamlConfigParser, :yaml)
   end
 end
 

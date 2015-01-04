@@ -137,9 +137,7 @@ module Log4r
       
     end
     
-    class << self
-      config_parser(XmlConfigParser, :xml)
-    end
+    config_parser(XmlConfigParser, :xml)
 
   end
 end

@@ -27,9 +27,14 @@ module Log4r
     
       alias_method :load_config, :config
       
-      def self.config_parser(parser, format_name)
-        self.const_set :Parser, parser
-        self.class_eval %{
+      #######
+      private
+      #######
+      
+      def config_parser(parser, format_name)
+        eigen = class << self; self; end
+        eigen.const_set :Parser, parser
+        eigen.class_eval %{
           def load_#{format_name}(str_or_file)
             load_config Parser.new(str_or_file).parse
           end

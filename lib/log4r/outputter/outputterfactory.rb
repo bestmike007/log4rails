@@ -11,49 +11,37 @@ class Outputter < Monitor
 
   class OutputterFactory #:nodoc:
     include Singleton
-    
+    class << self
       # handles two cases: logging above a level (no second arg specified)
       # or logging a set of levels (passed into the second argument)
-      def self.create_methods(out, levels=nil)
+      def create_methods(out, levels=nil)
         Logger.root # force levels to be loaded
 
         # first, undefine all the log levels
         for mname in LNAMES
-          undefine_log(mname.downcase, out)
+          switch_log_definition :off, mname.downcase, out
         end
-        if not levels.nil? and levels.include? OFF
-          raise TypeError, "Can't log only_at OFF", caller[1..-1]
+        if (levels || []).include? OFF
+          raise TypeError, "Can't log only_at OFF"
         end
         return out if out.level == OFF
 
-        if levels.nil? # then define the log methods for lev >= outlev
-          for lev in out.level...LEVELS
-            define_log(LNAMES[lev].downcase, lev, out)
-          end
-        else # define the logs only for assigned levels
-          for lev in levels
-            define_log(LNAMES[lev].downcase, lev, out)
-          end
+        for lev in (levels || (out.level...LEVELS))
+          switch_log_definition :on, LNAMES[lev].downcase, out
         end
         return out
       end
-
-      # we need to synch the actual write/format for thread safteyness
-      def self.define_log(mname, level, out)
-        return if mname == 'off' || mname == 'all'
-        mstr = %-
-          def out.#{mname}(logevent)
-            canonical_log(logevent)
-          end
-        -
-        module_eval mstr
-      end
       
-      def self.undefine_log(mname, out)
+      #######
+      private
+      #######
+      
+      def switch_log_definition(on_off, mname, out)
         return if mname == 'off' || mname == 'all'
-        mstr = "def out.#{mname}(logevent); end"
-        module_eval mstr
+        m = on_off == :on ? Proc.new {|logevent|canonical_log(logevent)} : Proc.new{|logevent|}
+        out.define_singleton_method mname.to_sym, m
       end
+    end
   end
 
 end

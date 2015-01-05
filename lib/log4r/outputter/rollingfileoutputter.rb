@@ -163,18 +163,25 @@ module Log4r
     # does the file require a roll?
     def requires_roll?
       return false if @rolling
-      if !@maxsize.nil? && @datasize > @maxsize
-        @rolling = true
-        Logger.log_internal { "Rolling because #{@filename} (#{@datasize} bytes) has exceded the maxsize limit (#{@maxsize} bytes)." }
-        return true
-      end
-      if !@maxtime.nil? && (Time.now - @start_time) > @maxtime
-        @rolling = true
-        Logger.log_internal { "Rolling because #{@filename} (created: #{@start_time}) has exceded the maxtime age (#{@maxtime} seconds)." }
+      @rolling = size_exceeded? || time_exceeded?
+      if @rolling
+        Logger.log_internal {
+          size_exceeded? ?
+          "Rolling because #{@filename} (#{@datasize} bytes) has exceded the maxsize limit (#{@maxsize} bytes)." :
+          "Rolling because #{@filename} (created: #{@start_time}) has exceded the maxtime age (#{@maxtime} seconds)."
+        }
         return true
       end
       false
-    end 
+    end
+    
+    def size_exceeded?
+      !@maxsize.nil? && @datasize > @maxsize
+    end
+    
+    def time_exceeded?
+      !@maxtime.nil? && (Time.now - @start_time) > @maxtime
+    end
 
     # roll the file
     def roll

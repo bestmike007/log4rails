@@ -32,35 +32,7 @@ module Log4r
 
     def initialize(_name, hash={})
       super( _name, hash.merge({:create => false}) )
-      if hash.has_key?(:maxsize) || hash.has_key?('maxsize') 
-        _maxsize = (hash[:maxsize] or hash['maxsize']).to_i
-        if _maxsize.class != Fixnum
-          raise TypeError, "Argument 'maxsize' must be an Fixnum", caller
-        end
-        if _maxsize == 0
-          raise TypeError, "Argument 'maxsize' must be > 0", caller
-        end
-        @maxsize = _maxsize
-      end
-      if hash.has_key?(:maxtime) || hash.has_key?('maxtime') 
-        _maxtime = (hash[:maxtime] or hash['maxtime']).to_i
-        if _maxtime.class != Fixnum
-          raise TypeError, "Argument 'maxtime' must be an Fixnum", caller
-        end
-        if _maxtime == 0
-          raise TypeError, "Argument 'maxtime' must be > 0", caller
-        end
-        @maxtime = _maxtime
-      end
-      if hash.has_key?(:max_backups) || hash.has_key?('max_backups') 
-        _max_backups = (hash[:max_backups] or hash['max_backups']).to_i
-        if _max_backups.class != Fixnum
-          raise TypeError, "Argument 'max_backups' must be an Fixnum", caller
-        end
-        @max_backups = _max_backups
-      else
-        @max_backups = -1
-      end
+      set_from_hash(hash)
       # @filename starts out as the file (including path) provided by the user, e.g. "\usr\logs\error.log".
       #   It will get assigned the current log file (including sequence number)   
       # @log_dir is the directory in which we'll log, e.g. "\usr\logs"
@@ -84,6 +56,31 @@ module Log4r
     #######
     private
     #######
+    
+    ParameterParsers = {
+      maxsize: {positive: true},
+      maxtime: {positive: true},
+      max_backups: {default: -1}
+    }
+    def set_from_hash(hash)
+      ParameterParsers.each { |s, options|
+        if hash.has_key?(s) || hash.has_key?(s.to_s) 
+          v = (hash[s] or hash[s.to_i]).to_i
+          validate_fixnum s, v, options
+          v ||= options[:default] if options.has_key? :default
+          instance_variable_set "@#{s}".to_sym, v
+        end
+      }
+    end
+    
+    def validate_fixnum(name, value)
+      if value.class != Fixnum
+        raise TypeError, "Argument '#{name}' must be an Fixnum"
+      end
+      if options[:positive] && value <= 0
+        raise TypeError, "Argument '#{s}' must be > 0"
+      end
+    end
 
 	  # Delete all but the latest number_to_keep log files.
     def purge_log_files(number_to_keep)
@@ -126,7 +123,7 @@ module Log4r
       # we have to keep track of the file size ourselves - File.size doesn't
       # seem to report the correct size when the size changes rapidly
       @datasize += data.size + 1 # the 1 is for newline
-      roll if requiresRoll
+      roll if requires_roll?
       super
     end
 
@@ -160,7 +157,7 @@ module Log4r
     end
 
     # does the file require a roll?
-    def requiresRoll
+    def requires_roll?
       if !@maxsize.nil? && @datasize > @maxsize
         Logger.log_internal { "Rolling because #{@filename} (#{@datasize} bytes) has exceded the maxsize limit (#{@maxsize} bytes)." }
         return true
@@ -209,26 +206,26 @@ module Log4r
 end
 
 # this can be found in examples/fileroll.rb as well
-if __FILE__ == $0
-  require 'log4r'
-  include Log4r
+# if __FILE__ == $0
+#   require 'log4r'
+#   include Log4r
 
 
-  timeLog = Logger.new 'WbExplorer'
-  timeLog.outputters = RollingFileOutputter.new("WbExplorer", { "filename" => "TestTime.log", "maxtime" => 10, "trunc" => true })
-  timeLog.level = DEBUG
+#   timeLog = Logger.new 'WbExplorer'
+#   timeLog.outputters = RollingFileOutputter.new("WbExplorer", { "filename" => "TestTime.log", "maxtime" => 10, "trunc" => true })
+#   timeLog.level = DEBUG
 
-  100.times { |t|
-    timeLog.info "blah #{t}"
-    sleep(1.0)
-  }
+#   100.times { |t|
+#     timeLog.info "blah #{t}"
+#     sleep(1.0)
+#   }
 
-  sizeLog = Logger.new 'WbExplorer'
-  sizeLog.outputters = RollingFileOutputter.new("WbExplorer", { "filename" => "TestSize.log", "maxsize" => 16000, "trunc" => true })
-  sizeLog.level = DEBUG
+#   sizeLog = Logger.new 'WbExplorer'
+#   sizeLog.outputters = RollingFileOutputter.new("WbExplorer", { "filename" => "TestSize.log", "maxsize" => 16000, "trunc" => true })
+#   sizeLog.level = DEBUG
 
-  10000.times { |t|
-    sizeLog.info "blah #{t}"
-  }
+#   10000.times { |t|
+#     sizeLog.info "blah #{t}"
+#   }
 
-end
+# end

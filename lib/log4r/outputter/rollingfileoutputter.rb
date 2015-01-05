@@ -64,16 +64,20 @@ module Log4r
     }
     def set_from_hash(hash)
       ParameterParsers.each { |s, options|
+        v = nil
         if hash.has_key?(s) || hash.has_key?(s.to_s) 
           v = (hash[s] or hash[s.to_i]).to_i
           validate_fixnum s, v, options
-          v ||= options[:default] if options.has_key? :default
+        elsif options.has_key?(:default)
+          v = options[:default]
+        end
+        unless v.nil?
           instance_variable_set "@#{s}".to_sym, v
         end
       }
     end
     
-    def validate_fixnum(name, value)
+    def validate_fixnum(name, value, options={})
       if value.class != Fixnum
         raise TypeError, "Argument '#{name}' must be an Fixnum"
       end
@@ -158,11 +162,14 @@ module Log4r
 
     # does the file require a roll?
     def requires_roll?
+      return false if @rolling
       if !@maxsize.nil? && @datasize > @maxsize
+        @rolling = true
         Logger.log_internal { "Rolling because #{@filename} (#{@datasize} bytes) has exceded the maxsize limit (#{@maxsize} bytes)." }
         return true
       end
       if !@maxtime.nil? && (Time.now - @start_time) > @maxtime
+        @rolling = true
         Logger.log_internal { "Rolling because #{@filename} (created: #{@start_time}) has exceded the maxtime age (#{@maxtime} seconds)." }
         return true
       end
@@ -198,7 +205,9 @@ module Log4r
       if (@max_backups >= 0) 
         purge_log_files(@max_backups + 1)
       end
-
+      
+    ensure
+      @rolling = false
     end 
 
   end

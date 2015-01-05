@@ -52,4 +52,15 @@ RSpec.describe "Log4r" do
     }.to raise_error(Log4r::ConfigError)
   end
   
+  it do
+    expect {
+      logger = Log4r::Logger.new("log4r")
+      outputter =  Log4r::RollingFileOutputter.new("foo", :filename => '/tmp/log4rails-test.log', :maxtime => 1)
+      logger.outputters = outputter
+      
+      sleep 2
+      logger.warn("Hello")
+    }.not_to raise_error
+  end
+  
 end

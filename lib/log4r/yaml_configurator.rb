@@ -21,7 +21,7 @@ module Log4r
           doc.has_key?( 'log4r_config') and @doc = doc['log4r_config'] and break
         }
         if @doc.nil?
-          raise ConfigError, "Key 'log4r_config:' not defined in yaml documents", caller[1..-1]
+          raise ConfigError, "Key 'log4r_config:' not defined in yaml documents"
         end
         @config = nil
       end
@@ -64,8 +64,8 @@ module Log4r
         arr.each do |item|
           if item.instance_of?(Hash)
             key_to_sym(item)
-          elsif item.instance_of?(Array)
-            array_key_to_sym(item)
+          # elsif item.instance_of?(Array)
+          #   array_key_to_sym(item)
           end
         end
       end

@@ -90,7 +90,7 @@ module Log4r
 
   class ObjectFormatter < Formatter
     def format(event)
-      buff = event.logger.name
+      buff = event.name
       buff << (event.tracer.nil? ? "" : ":#{event.tracer[0]}") + ">\n"
       buff << (event.data.kind_of?(String) ? event.data : event.data.inspect)
       buff << "\n"

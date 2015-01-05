@@ -13,6 +13,10 @@ RSpec.describe "Log4r" do
       expect(Log4r::MDC.get("user")).to eq "bestmike007"
       Log4r::MDC.put("user", "unique")
       expect(Log4r::MDC.get("user")).to eq "unique"
+      Log4r::MDC.remove("user")
+      expect(Log4r::MDC.get("user")).to be nil
+      Log4r::MDC.get_context["user"] = 'bestmike007'
+      expect(Log4r::MDC.get("user")).to be nil
     end
     t.join
     expect(Log4r::MDC.get("user")).to eq "bestmike007"

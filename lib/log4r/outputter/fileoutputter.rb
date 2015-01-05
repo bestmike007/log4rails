@@ -31,7 +31,7 @@ module Log4r
     
     def validate_file
       if @filename.class != String
-        raise TypeError, "Argument 'filename' must be a String", caller
+        raise TypeError, "Argument 'filename' must be a String"
       end
       if FileTest.exist?( @filename )
         if not FileTest.file?( @filename )

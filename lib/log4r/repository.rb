@@ -29,59 +29,62 @@ module Log4r
       attr_reader :loggers
 
       def initialize
-	@loggers = Hash.new
+        @loggers = Hash.new
       end
+      
+      class << self
 
-      def self.[](fullname)
-	self.synchronize do
-	  instance.loggers[fullname]
-	end # exclusive
+        def [](fullname)
+          synchronize do
+            instance.loggers[fullname]
+          end # exclusive
+        end
+  
+        def []=(fullname, logger)
+          synchronize do
+            instance.loggers[fullname] = logger
+          end # exclusive
+        end
+  
+        # Retrieves all children of a parent
+        def all_children(parent)
+          # children have the parent name + delimiter in their fullname
+          daddy = parent.name + Log4r::Log4rConfig::LoggerPathDelimiter
+          synchronize do
+            for fullname, logger in instance.loggers
+              yield logger if parent.is_root? || fullname =~ /#{daddy}/
+            end
+          end # exclusive
+        end
+  
+        # when new loggers are introduced, they may get inserted into
+        # an existing inheritance tree. this method
+        # updates the children of a logger to link their new parent
+        def reassign_any_children(parent)
+          synchronize do
+            for _, logger in instance.loggers
+              next if logger.is_root?
+              logger.parent = parent if logger.path =~ /^#{parent.fullname}$/
+            end
+          end # exclusive
+        end
+  
+        # looks for the first defined logger in a child's path 
+        # or nil if none found (which will then be rootlogger)
+        def find_ancestor(path)
+          arr = path.split Log4rConfig::LoggerPathDelimiter
+          logger = nil
+          synchronize do
+            while arr.size > 0 do
+              logger = Repository[arr.join(Log4rConfig::LoggerPathDelimiter)]
+              break unless logger.nil?
+              arr.pop
+            end
+          end # exclusive
+          logger
+        end
       end
-
-      def self.[]=(fullname, logger)
-	self.synchronize do
-	  instance.loggers[fullname] = logger
-	end # exclusive
-      end
-
-      # Retrieves all children of a parent
-      def self.all_children(parent)
-	# children have the parent name + delimiter in their fullname
-	daddy = parent.name + Private::Config::LoggerPathDelimiter
-	self.synchronize do
-	  for fullname, logger in instance.loggers
-	    yield logger if parent.is_root? || fullname =~ /#{daddy}/
-	  end
-	end # exclusive
-      end
-
-      # when new loggers are introduced, they may get inserted into
-      # an existing inheritance tree. this method
-      # updates the children of a logger to link their new parent
-      def self.reassign_any_children(parent)
-	self.synchronize do
-	  for _, logger in instance.loggers
-	    next if logger.is_root?
-	    logger.parent = parent if logger.path =~ /^#{parent.fullname}$/
-	  end
-	end # exclusive
-      end
-
-      # looks for the first defined logger in a child's path 
-      # or nil if none found (which will then be rootlogger)
-      def self.find_ancestor(path)
-	arr = path.split Log4rConfig::LoggerPathDelimiter
-	logger = nil
-	self.synchronize do
-	  while arr.size > 0 do
-	    logger = Repository[arr.join(Log4rConfig::LoggerPathDelimiter)]
-	    break unless logger.nil?
-	    arr.pop
-	  end
-	end # exclusive
-	logger
-      end
-
+        
     end # class Repository
   end # class Logger
 end # Module Log4r

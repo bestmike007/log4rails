@@ -34,12 +34,12 @@ module Log4r
       
       def initialize(doc)
         unless HAVE_REXML
-          raise LoadError, "Need REXML to load XML configuration", caller[1..-1]
+          raise LoadError, "Need REXML to load XML configuration"
         end
         @config = nil
         @root = REXML::Document.new(doc).elements['//log4r_config']
         if @root.nil?
-          raise ConfigError, "<log4r_config> element not defined", caller[1..-1]
+          raise ConfigError, "<log4r_config> element not defined"
         end
       end
       
@@ -77,7 +77,7 @@ module Log4r
         return if e.nil? or e.text.nil?
         @config[:pre_config][:custom_levels] = Log4rTools.comma_split(e.text)
       rescue TypeError => te
-        raise ConfigError, te.message, caller[1..-4]
+        raise ConfigError, te.message, te.backtrace
       end
       
       def global_config(e)

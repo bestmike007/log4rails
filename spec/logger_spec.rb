@@ -20,6 +20,18 @@ RSpec.describe "Log4r" do
   it "validates when creating a logger" do
     expect{ Log4r::Logger.new }.to raise_error(ArgumentError)
     expect{ Log4r::Logger.new('validate', nil) }.not_to raise_error
+    expect{ Log4r::Logger.new('test') }.not_to raise_error
+    expect{ Log4r::Logger.get('test') }.not_to raise_error
+    expect{ Log4r::Logger.get('bogus') }.to raise_error(NameError)
+    names = []
+    Log4r::Logger.each { |name, logger|
+      names << name
+      expect(logger).to be Log4r::Logger[name]
+    }
+    expect(names).to eq ["root", "global", 'validate', 'test']
+    Log4r::Logger.each_logger { |logger|
+      expect(logger).to be_a(Log4r::Logger)
+    }
   end
   
   it "sets levels" do
@@ -86,6 +98,9 @@ RSpec.describe "Log4r" do
     expect(d.level).to eq a.level
     expect(d.parent).to be a
     expect{ Log4r::Logger.new("::a") }.to raise_error(ArgumentError)
+    children = []
+    Log4r::Logger::Repository.all_children(a) {|l|children<<l}
+    expect(children).to eq [b, c, d]
   end
   
   it "tests undefined parents" do
@@ -241,17 +256,19 @@ RSpec.describe "Log4r" do
     expect {
       class MyFormatter1 < Log4r::Formatter
         def format(event)
-          return "MyFormatter1\n"
+          return "#{Log4r::LNAMES[event.level]} #{event.name}: #{event.data}\n"
         end
       end
       
       class MyFormatter2 < Log4r::Formatter
+        include Singleton
+        
         def format(event)
           return "MyFormatter2\n"
         end
       end
       l = Log4r::Logger.new('custom_formatter')
-      o = Log4r::RspecOutputter.new('formatter' => MyFormatter1.new)
+      o = Log4r::RspecOutputter.new("test", 'formatter' => MyFormatter1.new)
       l.add o
       o.expect_log("ERROR custom_formatter: try myformatter1") {
         l.error "try myformatter1"
@@ -259,10 +276,17 @@ RSpec.describe "Log4r" do
       o.expect_log("FATAL custom_formatter: try myformatter1") {
         l.fatal "try myformatter1"
       }
-      o.formatter = MyFormatter2.new
+      o.formatter = MyFormatter2
       o.expect_log("MyFormatter2", times: 2) {
         l.error "try formatter2"
         l.fatal "try formatter2"
+      }
+      l.remove 'test'
+      o.expect_log(//, times: 0) {
+        l.debug "anything"
+        l.warn "anything"
+        l.error "anything"
+        l.fatal "anything"
       }
     }.not_to raise_error
   end

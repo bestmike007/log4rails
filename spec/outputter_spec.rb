@@ -7,8 +7,23 @@ RSpec.describe "Log4r" do
     Log4r::Logger.root
   }
   
+  it "create std outputter automatically" do
+    expect(Log4r::Outputter["stdout"]).not_to be nil
+    expect(Log4r::Outputter["stderr"]).not_to be nil
+    names = []
+    Log4r::Outputter.each do |name, o|
+      expect(o.name).to eq name
+      names << name
+    end
+    expect(names).to eq ['stdout', 'stderr']
+    Log4r::Outputter.each_outputter do |o|
+      expect(o).to be_a(Log4r::Outputter)
+    end
+  end
+  
   it 'tests validation' do
      expect{ Log4r::Outputter.new }.to raise_error(ArgumentError)
+     expect{ Log4r::Outputter.new nil }.to raise_error(ArgumentError)
      expect{ Log4r::Outputter.new 'fonda', :level => -10 }.to raise_error(ArgumentError)
      expect{ Log4r::Outputter.new 'fonda', :formatter => -10 }.to raise_error(TypeError)
   end
@@ -111,7 +126,11 @@ RSpec.describe "Log4r" do
     expect{ o.only_at }.to raise_error(ArgumentError)
     expect{ o.only_at Log4r::ALL }.to raise_error(ArgumentError)
     expect{ o.only_at Log4r::OFF }.to raise_error(TypeError)
-    expect{ o.only_at Log4r::DEBUG, Log4r::ERROR }.not_to raise_error
+    l = Log4r::Logger.new('log4r')
+    l.add o
+    o.expect_log("DEBUG log4r: Outputter 'so2' writes only on DEBUG, ERROR") {
+      expect{ o.only_at Log4r::DEBUG, Log4r::ERROR }.not_to raise_error
+    }
     # cuz the rest is broken
     # test the methods as before
     # event = LogEvent.new(nil,nil,nil,nil)

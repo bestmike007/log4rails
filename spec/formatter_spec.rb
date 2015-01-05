@@ -36,4 +36,9 @@ RSpec.describe "Log4r" do
     expect(b.format(Log4r::LogEvent.new(0,f,nil,[1,2,3]))).to match(/Array/)
   end
   
+  it "tests ObjectFormatter" do
+    formatter = Log4r::ObjectFormatter.new
+    expect(formatter.format Log4r::LogEvent.new(Log4r::DEBUG, Log4r::Logger.new("irb"), nil, "bestmike007")).to eq "irb>\nbestmike007\n"
+  end
+  
 end

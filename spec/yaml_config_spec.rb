@@ -4,6 +4,12 @@ RSpec.describe "Log4r" do
   
   before(:each) { reload_log4r }
   
+  it "YamlConfigurator configure in log4r_config" do
+    expect {
+      Log4r::YamlConfigurator.load_yaml("a: 1")
+    }.to raise_error(Log4r::ConfigError)
+  end
+  
   it "loads yaml configuration without exception" do
     expect {
       Log4r::YamlConfigurator.load_yaml_file(File.join(File.dirname(__FILE__), 'testyaml_injection.yaml'))

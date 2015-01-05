@@ -131,7 +131,7 @@ module Log4r
       
       # deal with the directive by inserting a %#.#s where %#.# is copied directy from the match
       def handle_pattern_directive(letter, data)
-      	if letter == 'X' && !data.nil?
+      	if letter == 'X' && data != nil
       	  # MDC matches, need to be able to handle String, Symbol or Number
       	  match6sub = /[\{\}\"]/
       	  mdcmatches = data.match(/\{(:?)(\d*)(.*)\}/)

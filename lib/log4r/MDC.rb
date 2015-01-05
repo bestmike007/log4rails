@@ -38,24 +38,24 @@ module Log4r
       end
       private :clone_from_main
   
-      def get( a_key )
-        self.check_thread_instance()
-        Thread.current[MDCNAME].fetch(a_key, "");
+      def get(a_key)
+        check_thread_instance()
+        Thread.current[MDCNAME][a_key];
       end
   
-      def get_context()
-        self.check_thread_instance()
+      def get_context
+        check_thread_instance()
         return Thread.current[MDCNAME].clone
       end
   
-      def put( a_key, a_value )
-        self.check_thread_instance()
+      def put(a_key, a_value)
+        check_thread_instance()
         Thread.current[MDCNAME][a_key] = a_value
       end
   
-      def remove( a_key )
-        self.check_thread_instance()
-        Thread.current[MDCNAME].delete( a_key )
+      def remove(a_key)
+        check_thread_instance()
+        Thread.current[MDCNAME].delete(a_key)
       end
     end
   end

@@ -120,10 +120,8 @@ module Log4r
       for thing in _outputters
         o = (thing.kind_of?(Outputter) ? thing : Outputter[thing])
         # some basic validation
-        if not o.kind_of?(Outputter)
-          raise TypeError, "Expected kind of Outputter, got #{o.class}", caller
-        elsif o.nil?
-          raise TypeError, "Couldn't find Outputter '#{thing}'", caller
+        unless o.kind_of?(Outputter)
+          raise TypeError, "Couldn't find Outputter '#{thing}'"
         end
         @outputters.push o
         Logger.log_internal {"Added outputter '#{o.name}' to '#{@fullname}'"}

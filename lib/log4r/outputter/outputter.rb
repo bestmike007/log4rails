@@ -17,7 +17,6 @@ module Log4r
 
   class Outputter < Monitor
     attr_reader :name, :level, :formatter
-    @@outputters = Hash.new
 
     # An Outputter needs a name. RootLogger will be loaded if not already
     # done. The hash arguments are as follows:
@@ -32,7 +31,7 @@ module Log4r
       end
       @name = _name
       validate_hash(hash)
-      @@outputters[@name] = self
+      Outputter[@name] = self
     end
 
     # dynamically change the level
@@ -51,8 +50,7 @@ module Log4r
       @level = levels.sort.first
       OutputterFactory.create_methods self, levels
       Logger.log_internal {
-        "Outputter '#{@name}' writes only on " +
-        levels.collect{|l| LNAMES[l]}.join(", ")
+        "Outputter '#{@name}' writes only on #{levels.collect{|l| LNAMES[l]}.join(", ")}"
       }
     end
 

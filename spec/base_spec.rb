@@ -11,6 +11,7 @@ RSpec.describe "Log4r" do
     levels = [:ALL, :DEBUG, :INFO, :WARN, :ERROR, :FATAL, :OFF, :LEVELS].map{|l| Log4r.const_get l }
     expect(levels).to eq [0, 1, 2, 3, 4, 5, 6, 7]
     expect(Log4r::LNAMES.size).to eq 7
+    expect(Log4r::Logger.root.levels).to be Log4r::LNAMES
   end
   
   it "check bad input and bounds for validate_level" do
@@ -36,6 +37,19 @@ RSpec.describe "Log4r" do
         expect(Log4r::Log4rTools.decode_bool({ key => values[0] }, :data, values[1])).to eq values[2]
       end
     end
+  end
+  
+  it "tests camel underscore" do
+    expect(Log4r::Log4rTools.underscore("HelloWorld")).to eq 'hello_world'
+  end
+  
+  it "cannot configure invalid formatter" do
+    configurator = Log4r::Configurator::OutputterConfigurator.new(nil, {
+      name: 'test', type: 'RspecOutputter', formatter: { type: 'BogusFormatter' }
+    })
+    expect {
+      configurator.do_config
+    }.to raise_error(Log4r::ConfigError)
   end
   
 end

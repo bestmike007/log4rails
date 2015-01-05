@@ -38,14 +38,19 @@ module Log4r
       return if !initialized?
       file_pattern = File.join(File.dirname(__FILE__), "%s.rb")
       class_eval %{
+        # resets XDC
         Log4r::NDC.clear
         Log4r::GDC.set $0
         Thread.current[Log4r::MDCNAME] = Hash.new
         Thread.main[Log4r::MDCNAME] = Hash.new
-        (LNAMES + [:LNAMES, :LEVELS, :MaxLevelLength, :Repository, :RootLogger] - ["ALL"]).each { |c| remove_const c rescue nil }
-        const_set :LNAMES, ["ALL"]
-        ["repository", "staticlogger"].each {|f|load "#{file_pattern}" % f }
-        Outputter.class_eval "@@outputters = Hash.new"
+        # resets levels
+        (LNAMES + [:LNAMES, :LEVELS, :MaxLevelLength, :RootLogger]).each { |c| remove_const c rescue nil }
+        ALL = 0
+        LNAMES = ['ALL']
+        # reset RootLogger & Repositories.
+        load '#{file_pattern}' % "rootlogger"
+        Outputter.instance_eval "@outputters = Hash.new"
+        Logger::Repository.instance.instance_eval "@loggers = Hash.new"
       }
     end
     

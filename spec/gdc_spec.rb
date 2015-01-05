@@ -14,6 +14,8 @@ RSpec.describe "Log4r" do
   it "can set GDC stack" do
     expect{ Log4r::GDC.set("testGDCset") }.not_to raise_error
     expect(Log4r::GDC.get).to eq "testGDCset"
+    Log4r::GDC.clear
+    expect(Log4r::GDC.get).to eq ""
   end
   
   it "ensure that GDC does not work on threads" do

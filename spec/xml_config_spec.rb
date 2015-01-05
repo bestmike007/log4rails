@@ -17,6 +17,12 @@ RSpec.describe "Log4r" do
   
   before(:each) { reload_log4r }
   
+  it "loads //log4r_config as root" do
+    expect {
+      Log4r::XmlConfigurator.load_xml("<root></root>")
+    }.to raise_error(Log4r::ConfigError)
+  end
+  
   it "loads xml config `One`" do
     expect {
       Log4r::XmlConfigurator.load_xml_string(One)

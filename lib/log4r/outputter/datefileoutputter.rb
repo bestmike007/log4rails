@@ -45,23 +45,12 @@ module Log4r
     DEFAULT_DATE_FMT = "%Y-%m-%d"
 
     def initialize(_name, hash={})
-      @DatePattern = (hash[:date_pattern] or hash['date_pattern'] or
-                      DEFAULT_DATE_FMT)
-      @DateStamp = Time.now.strftime( @DatePattern);
-      _dirname = (hash[:dirname] or hash['dirname'])
+      @DatePattern = hash[:date_pattern] || hash['date_pattern'] || DEFAULT_DATE_FMT
+      @DateStamp = Time.now.strftime(@DatePattern);
+      _dirname = hash[:dirname] || hash['dirname']
       # hash[:dirname] masks hash[:filename]
-      if _dirname
-        if not FileTest.directory?( _dirname)
-          raise StandardError, "'#{_dirname}' must be a valid directory", caller
-        end
-      end
-
-      _filename = (hash[:filename] or hash['filename'])
-      if _filename.nil?
-        @filebase = File.basename( $0, '.rb') + ".log"
-      else
-        @filebase = File.basename((hash[:filename] or hash['filename'] or ""))
-      end
+      validate_dirname _dirname
+      get_filebase(hash[:filename] || hash['filename'])
 
       # Get rid of the 'nil' in the path
       path = [_dirname, @filebase.sub(/(\.\w*)$/, "_#{@DateStamp}" + '\1')].compact
@@ -73,6 +62,22 @@ module Log4r
     #######
     private
     #######
+    
+    def validate_dirname(_dirname)
+      if _dirname
+        if not FileTest.directory?( _dirname)
+          raise StandardError, "'#{_dirname}' must be a valid directory"
+        end
+      end
+    end
+    
+    def get_filebase(_filename)
+      if _filename.nil?
+        @filebase = File.basename( $0, '.rb') + ".log"
+      else
+        @filebase = File.basename((hash[:filename] or hash['filename'] or ""))
+      end
+    end
 
     # perform the write
     def write(data)

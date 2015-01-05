@@ -33,15 +33,19 @@ module Log4r
 
       return if logevent.data.empty?
 
-      o = format(logevent)
-      msg = if o.is_a? Exception
-              "#{o.class} at (#{o.backtrace[0]}): #{o.message}"
-            elsif o.respond_to?(:to_str)
-              o.to_str
-            else
-              o.inspect
-            end
+      msg = format_event(logevent)
       synch { @buff.has_key?(pri) ? @buff[pri].push(msg) : @buff[pri] = [msg] }
+    end
+    
+    def format_event(logevent)
+      o = format(logevent)
+      if o.is_a? Exception
+        "#{o.class} at (#{o.backtrace[0]}): #{o.message}"
+      elsif o.respond_to?(:to_str)
+        o.to_str
+      else
+        o.inspect
+      end
     end
   end
 end

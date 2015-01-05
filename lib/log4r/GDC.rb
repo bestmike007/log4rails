@@ -13,29 +13,34 @@ module Log4r
 
   # See log4r/GDC.rb
   class GDC < Monitor
+    
     private_class_method :new
+    
+    class << self
 
-    def self.clear()
-      Thread.main[GDCNAME] = ""
-    end
-
-    def self.get()
-      $globalGDCLock.synchronize do
-	if ( Thread.main[GDCNAME] == nil ) then
-	  Thread.main[GDCNAME] = $0
-	end
+      def clear
+        Thread.main[GDCNAME] = ""
       end
-      return Thread.main[GDCNAME]
-    end
-
-    def self.set( a_name )
-      if ( Thread.current != Thread.main ) then
-	raise "Can only initialize Global Diagnostic Context from Thread.main" 
+  
+      def get
+        $globalGDCLock.synchronize do
+      	  Thread.main[GDCNAME] ||= $0
+        end
+        Thread.main[GDCNAME]
       end
-      $globalGDCLock.synchronize do
-	Thread.main[GDCNAME] = a_name
+  
+      def set(a_name)
+        if Thread.current != Thread.main
+  	      raise "Can only initialize Global Diagnostic Context from Thread.main"
+        end
+        $globalGDCLock.synchronize do
+  	      Thread.main[GDCNAME] = a_name
+        end
       end
-    end
-  end
+      
+    end # class << GDC
+    
+  end # GDC
+  
 end
 

@@ -7,6 +7,25 @@ RSpec.describe "Log4r" do
     Log4r::Logger.root
   }
   
+  it "tests formatter with MDC" do
+    l = Log4r::Logger.new 'test::this::that::other'
+    l.trace = true
+    o = Log4r::RspecOutputter.new 'testy'
+    l.add o
+    f = Log4r::PatternFormatter.new :pattern=> "%d %6l [%C]%c {%X{user}} %% %-40.30M"
+                             #:date_pattern=> "%Y"
+                             #:date_method => :usec
+    o.formatter = f
+
+    o.expect_log(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that::other\]other {} % no user\s+$/) {
+      l.info "no user"
+    }
+    Log4r::MDC.put("user","bestmike007")
+    o.expect_log(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that::other\]other {bestmike007} % user bestmike007\s+$/) {
+      l.info "user bestmike007"
+    }
+  end
+  
   it "tests basic pattern formatter functions" do
     l = Log4r::Logger.new 'test::this::that'
     l.trace = true
@@ -84,25 +103,6 @@ RSpec.describe "Log4r" do
     Log4r::GDC.set("non-default")
     o.expect_log(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that::other\]other {non-default} % GDC non-default\s+$/) {
       l.info "GDC non-default"
-    }
-  end
-  
-  it "tests formatter with MDC" do
-    l = Log4r::Logger.new 'test::this::that::other'
-    l.trace = true
-    o = Log4r::RspecOutputter.new 'testy'
-    l.add o
-    f = Log4r::PatternFormatter.new :pattern=> "%d %6l [%C]%c {%X{user}} %% %-40.30M"
-                             #:date_pattern=> "%Y"
-                             #:date_method => :usec
-    o.formatter = f
-
-    o.expect_log(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that::other\]other {} % no user\s+$/) {
-      l.info "no user"
-    }
-    Log4r::MDC.put("user","bestmike007")
-    o.expect_log(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}   INFO \[test::this::that::other\]other {bestmike007} % user bestmike007\s+$/) {
-      l.info "user bestmike007"
     }
   end
 end

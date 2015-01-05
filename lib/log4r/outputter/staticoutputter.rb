@@ -4,7 +4,7 @@ module Log4r
   class Outputter < Monitor
     # Retrieve an outputter.
     def self.[](name)
-    out = @@outputters[name]
+      out = @@outputters[name]
       if out.nil?
         return case name
         when 'stdout' then StdoutOutputter.new 'stdout'

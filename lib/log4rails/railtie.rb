@@ -16,37 +16,6 @@ module Log4rails
 
   class Railtie < Rails::Railtie
     
-    config.log4rails = ActiveSupport::OrderedOptions.new
-    # default values
-    config.log4rails.enabled = false
-    config.log4rails.action_mht = 500
-    config.log4rails.auto_reload = true
-
-    initializer "log4rails.pre_init", :before => :initialize_logger do |app|
-      if app.config.log4rails.enabled
-        Log4rails::Railtie.pre_init(app, {:root => Rails.root.to_s, :env => Rails.env}.merge(app.config.log4rails))
-      end
-    end
-
-    initializer "log4rails.post_init", :after => :initialize_logger do |app|
-      if app.config.log4rails.enabled
-        Log4rails::Railtie.post_init
-      end
-    end
-
-    initializer "log4rails.cache_logger", :after => :initialize_cache do |app|
-      if app.config.log4rails.enabled
-        class << Rails.cache
-          def logger
-            Log4r::Logger['rails::cache'] || Log4r::Logger.root
-          end
-          def logger=(l)
-            (l || logger).debug "Log4r is preventing set of logger for cache."
-          end
-        end
-      end
-    end
-    
     class << self
       
       class Log4railsRailtieInitializer
@@ -117,16 +86,52 @@ module Log4rails
         
       end
       
-      def pre_init(app, opts)
-        @initializer = Log4railsRailtieInitializer.new(app, opts)
-        @initializer.pre_init
+      def before_init
+        config.log4rails = ActiveSupport::OrderedOptions.new
+        # default values
+        config.log4rails.enabled = false
+        config.log4rails.action_mht = 500
+        config.log4rails.auto_reload = true
       end
       
-      def post_init
-        @initializer.post_init
+      def pre_init(app)
+        if app.config.log4rails.enabled
+          opts = {:root => Rails.root.to_s, :env => Rails.env}.merge(app.config.log4rails)
+          @initializer = Log4railsRailtieInitializer.new(app, opts)
+          @initializer.pre_init
+        end
+      end
+      
+      def post_init(app)
+        if app.config.log4rails.enabled
+          @initializer.post_init
+        end
+      end
+      
+      def init_cache_logger(app)
+        if app.config.log4rails.enabled
+          class << Rails.cache
+            def logger
+              Log4r::Logger['rails::cache'] || Log4r::Logger.root
+            end
+            def logger=(l)
+              (l || logger).debug "Log4r is preventing set of logger for cache."
+            end
+          end
+        end
       end
       
     end # class << Railtie
+    
+    InitializerOptions = {
+      pre_init: { before: :initialize_logger },
+      post_init: { after: :initialize_logger },
+      init_cache_logger: { after: :initialize_cache }
+    }
+    
+    before_init
+    
+    InitializerOptions.each { |k, v| initializer "log4rails.#{k}", v, &method(k) }
     
   end # class Railtie
   
